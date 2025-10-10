@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { supabase } from "@/lib/supabase"
+import { createClient } from "@supabase/supabase-js"
 
 interface RSVPData {
   guestName: string
@@ -45,6 +45,12 @@ export async function POST(request: NextRequest) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
+    console.log("Environment check:", {
+      hasUrl: !!supabaseUrl,
+      hasKey: !!supabaseKey,
+      urlPreview: supabaseUrl ? `${supabaseUrl.substring(0, 20)}...` : "MISSING",
+    })
+
     if (!supabaseUrl || !supabaseKey) {
       console.error("Supabase not configured:", {
         hasUrl: !!supabaseUrl,
@@ -53,16 +59,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "Database not configured. Please add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables.",
+            "Database not configured. Please add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables in Vercel.",
+          debug: {
+            hasUrl: !!supabaseUrl,
+            hasKey: !!supabaseKey,
+          },
         },
         { status: 500 },
       )
     }
 
+    // Create Supabase client
+    const supabase = createClient(supabaseUrl, supabaseKey)
+
     // First, check if the actual_guest_count column exists
     let hasActualGuestCountColumn = true
     try {
-      // Try to query the column to see if it exists
       const { error: columnCheckError } = await supabase.from("rsvps").select("actual_guest_count").limit(1)
 
       if (columnCheckError && columnCheckError.message.includes("actual_guest_count")) {
@@ -236,17 +248,21 @@ async function sendViaTwilioWhatsApp(phone: string, message: string) {
 
 // GET method for testing
 export async function GET() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
   console.log("=== API Health Check ===")
-  console.log("Supabase URL:", process.env.NEXT_PUBLIC_SUPABASE_URL ? "✅ Set" : "❌ Missing")
-  console.log("Supabase Key:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "✅ Set" : "❌ Missing")
+  console.log("Supabase URL:", supabaseUrl ? "✅ Set" : "❌ Missing")
+  console.log("Supabase Key:", supabaseKey ? "✅ Set" : "❌ Missing")
   console.log("Twilio SID:", process.env.TWILIO_ACCOUNT_SID ? "✅ Set" : "❌ Missing")
 
   return NextResponse.json({
     message: "RSVP API is working",
     timestamp: new Date().toISOString(),
     config: {
-      supabase: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-      twilio: !!process.env.TWILIO_ACCOUNT_SID,
+      supabase: !!supabaseUrl,
+      supabaseUrlPreview: supabaseUrl ? `${supabaseUrl.substring(0, 30)}...` : "MISSING",
+      twilioConfigured: !!process.env.TWILIO_ACCOUNT_SID,
     },
     endpoints: {
       POST: "/api/rsvp - Submit RSVP data",
