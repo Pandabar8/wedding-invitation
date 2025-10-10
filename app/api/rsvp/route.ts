@@ -42,9 +42,21 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if Supabase is configured
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      console.error("Supabase not configured")
-      return NextResponse.json({ error: "Database not configured" }, { status: 500 })
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+    if (!supabaseUrl || !supabaseKey) {
+      console.error("Supabase not configured:", {
+        hasUrl: !!supabaseUrl,
+        hasKey: !!supabaseKey,
+      })
+      return NextResponse.json(
+        {
+          error:
+            "Database not configured. Please add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables.",
+        },
+        { status: 500 },
+      )
     }
 
     // First, check if the actual_guest_count column exists
