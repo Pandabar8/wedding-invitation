@@ -610,6 +610,46 @@
             font-style: italic;
         }
 
+        /* Adults Only Section Styles */
+        .adults-only-section {
+            padding: var(--spacing-2xl) var(--spacing-xl);
+            background: var(--color-background-dark);
+            text-align: center;
+            color: var(--color-foreground-inverse);
+        }
+
+        .adults-only-section .section-title {
+            color: var(--color-foreground-inverse);
+        }
+
+        .adults-only-section .section-subtitle {
+            color: var(--color-accent);
+        }
+
+        .adults-only-content {
+            max-width: 650px;
+            margin: 0 auto;
+        }
+
+        .adults-only-icon {
+            font-size: 3.5rem;
+            margin-bottom: var(--spacing-md);
+            color: var(--color-accent);
+        }
+
+        .adults-only-message {
+            font-size: 1.15rem;
+            line-height: 2;
+            color: var(--color-foreground-inverse);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .adults-only-note {
+            font-style: italic;
+            color: var(--color-accent);
+            font-size: 1rem;
+        }
+
         /* Gifts Section Styles */
         .gift-section {
             padding: var(--spacing-2xl) var(--spacing-xl);
@@ -861,6 +901,7 @@
             .events-section,
             .itinerary-section,
             .dress-code-section,
+            .adults-only-section,
             .gift-section,
             .rsvp-section,
             .countdown-section {
@@ -991,6 +1032,24 @@
                 height: 45px;
             }
 
+            /* Mobile responsive for adults only section */
+            .adults-only-section {
+                padding: 50px var(--spacing-md);
+            }
+            
+            .adults-only-icon {
+                font-size: 3rem;
+            }
+            
+            .adults-only-message {
+                font-size: 1.05rem;
+                line-height: 1.8;
+            }
+            
+            .adults-only-note {
+                font-size: 0.95rem;
+            }
+
             .gift-icon {
                 font-size: 3rem;
             }
@@ -1076,6 +1135,7 @@
             .events-section,
             .itinerary-section,
             .dress-code-section,
+            .adults-only-section,
             .gift-section,
             .rsvp-section,
             .countdown-section {
@@ -1301,6 +1361,24 @@
                     <div class="color-swatch color-emerald-green"></div>
                 </div>
                 <p class="avoid-note">Por favor evita blanco o verde esmeralda</p>
+            </div>
+        </div>
+
+        <!-- Adults Only Section -->
+        <div class="adults-only-section">
+            <div class="section-header fade-in">
+                <h2 class="section-title">Celebración para Adultos</h2>
+                <p class="section-subtitle">Una Noche Especial</p>
+            </div>
+            <div class="adults-only-content fade-in">
+                <div class="adults-only-icon">🍷</div>
+                <p class="adults-only-message">
+                    Aunque amamos a sus pequeños, esta será una celebración solo para adultos.<br>
+                    Les agradecemos su comprensión y esperamos que disfruten de una noche especial con nosotros.
+                </p>
+                <p class="adults-only-note">
+                    Por favor dejen a los niños en casa y disfruten de una velada romántica.
+                </p>
             </div>
         </div>
 
