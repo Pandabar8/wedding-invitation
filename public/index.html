@@ -1191,7 +1191,8 @@
                         <p><strong>Hora:</strong> 4:00 PM</p>
                         <p><strong>Lugar:</strong> Parroquia ONUVA</p>
                         <p>Calle al Boqueron Km 12<br>Santa Tecla</p>
-                        <a href="https://www.google.com/maps/place/Parroquia+Nuestra+Se%C3%B1ora+de+Las+Gracias+-+ONUVA/@13.6909555,-89.2851623,954m/data=!3m2!1e3!4b1!4m6!3m5!1s0x8f632fa857463335:0xe0685d6dcc941ce8!8m2!3d13.6909503!4d-89.2825874!16s%2Fg%2F11cnc9xhnh!5m1!1e2?entry=ttu&g_ep=EgoyMDI1MTAwNy4wIKXMDSoASAFQAw%3D%3D" class="map-link">Ver Ubicación</a>
+                        <a href="https://www.google.com/maps/place/Parroquia+Nuestra+Se%C3%B1ora+de+Las+Gracias+-+ONUVA/@13.6909555,-89.2851623,954m/data=!3m2!1e3!4b1!4m6!3m5!1s0x8f632fa857463335:0xe0685d6dcc941ce8!8m2!3d13.6909503!4d-89.2825874!16s%2Fg%2F11cnc9xhnh!5m1!1e2?entry=ttu&g_ep=EgoyMDI1MTAwNy4wIKXMDSoASAFQAw%3D%3D" 
+                           class="map-link" target="_blank" rel="noopener noreferrer">Ver Ubicación</a>
                     </div>
                 </div>
                 <div class="event-card slide-in-right">
@@ -1201,7 +1202,8 @@
                         <p><strong>Hora:</strong> 6:150 PM</p>
                         <p><strong>Lugar:</strong> Finca La Quadra </p>
                         <p>Carretera Planes de Renderos Km 8 1/2<br>Por la casa de piedra</p>
-                        <a href="https://www.google.com/maps/place/La+Quadra/@13.6517498,-89.1987502,543m/data=!3m1!1e3!4m14!1m7!3m6!1s0xd72dd9a431b387d:0xbe91fef0a6a68a59!2sFinca+La+Cuadra!8m2!3d36.681669!4d-4.7552338!16s%2Fg%2F11h_5lvd90!3m5!1s0x8f6331007b7dc4c5:0xd396e1b2c24fbed9!8m2!3d13.6516!4d-89.1975!16s%2Fg%2F11lzn9b1c7!5m1!1e2?entry=ttu&g_ep=EgoyMDI1MTAwNy4wIKXMDSoASAFQAw%3D%3D" class="map-link">Ver Ubicación</a>
+                        <a href="https://www.google.com/maps/place/La+Quadra/@13.6517498,-89.1987502,543m/data=!3m1!1e3!4m14!1m7!3m6!1s0xd72dd9a431b387d:0xbe91fef0a6a68a59!2sFinca+La+Cuadra!8m2!3d36.681669!4d-4.7552338!16s%2Fg%2F11h_5lvd90!3m5!1s0x8f6331007b7dc4c5:0xd396e1b2c24fbed9!8m2!3d13.6516!4d-89.1975!16s%2Fg%2F11lzn9b1c7!5m1!1e2?entry=ttu&g_ep=EgoyMDI1MTAwNy4wIKXMDSoASAFQAw%3D%3D" 
+                           class="map-link" target="_blank" rel="noopener noreferrer">Ver Ubicación</a>
                     </div>
                 </div>
             </div>
@@ -1431,18 +1433,24 @@
             });
         });
 
-        // RSVP Form
+                // RSVP Form
         document.getElementById('rsvpForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const submitBtn = this.querySelector('.submit-btn');
+            const errorMessage = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+            
             submitBtn.textContent = 'Enviando...';
             submitBtn.disabled = true;
+            errorMessage.style.display = 'none';
             
             const formData = new FormData(this);
             const attendance = formData.get('attendance');
             
             try {
+                console.log('Submitting RSVP...');
+                
                 const response = await fetch('/api/rsvp', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1450,20 +1458,27 @@
                         guestName: formData.get('guestName'),
                         attendance: attendance,
                         guestCount: formData.get('guestCount'),
-                        actualGuestCount: attendance === 'yes' ? formData.get('actualGuestCount') : 0,
-                        message: formData.get('message'),
+                        actualGuestCount: attendance === 'yes' ? formData.get('actualGuestCount') : '0',
+                        message: formData.get('message') || '',
                         timestamp: new Date().toISOString()
                     })
                 });
 
-                if (response.ok) {
+                console.log('Response status:', response.status);
+                
+                const data = await response.json();
+                console.log('Response data:', data);
+
+                if (response.ok && data.success) {
                     this.style.display = 'none';
                     document.getElementById('successMessage').style.display = 'block';
                 } else {
-                    throw new Error('Error al enviar');
+                    throw new Error(data.error || 'Error desconocido');
                 }
             } catch (error) {
-                document.getElementById('errorMessage').style.display = 'block';
+                console.error('RSVP submission error:', error);
+                errorText.textContent = error.message || 'Por favor intenta de nuevo o contacta a los novios.';
+                errorMessage.style.display = 'block';
             } finally {
                 submitBtn.textContent = 'Enviar Confirmación';
                 submitBtn.disabled = false;
