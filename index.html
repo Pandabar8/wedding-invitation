@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Michelle & Andres - Wedding Invitation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            min-height: 100vh;
+            color: #2d3436;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .header {
+            background: linear-gradient(135deg, rgb(138,159,126) 0%, #a8c49a 100%);
+            padding: 60px 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        .names {
+            font-size: 3.5rem;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .ampersand {
+            font-size: 2.5rem;
+            color: #f4f3ee;
+            margin: 0 20px;
+            font-style: italic;
+        }
+
+        .tagline {
+            font-size: 1.3rem;
+            color: #f4f3ee;
+            font-style: italic;
+            position: relative;
+            z-index: 1;
+        }
+
+        .photo-section {
+            padding: 50px 40px;
+            text-align: center;
+            background: linear-gradient(to bottom, #f8f9fa, white);
+        }
+
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .photo-placeholder {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, rgb(138,159,126), #a8c49a);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.1rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .photo-placeholder::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .photo-placeholder:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+        }
+
+        .photo-placeholder:hover::before {
+            left: 100%;
+        }
+
+        .events-section {
+            padding: 50px 40px;
+            background: white;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            color: rgb(138,159,126);
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background: linear-gradient(90deg, rgb(138,159,126), #a8c49a);
+            border-radius: 2px;
+        }
+
+        .events-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .event-card {
+            background: linear-gradient(135deg, #f8f9fa, white);
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid #e9ecef;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .event-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, rgb(138,159,126), #a8c49a);
+        }
+
+        .event-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        }
+
+        .event-title {
+            font-size: 1.8rem;
+            color: rgb(138,159,126);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .event-details {
+            line-height: 1.8;
+            color: #2d3436;
+        }
+
+        .event-details strong {
+            color: rgb(138,159,126);
+        }
+
+        .map-link {
+            display: inline-block;
+            background: linear-gradient(135deg, rgb(138,159,126), #a8c49a);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .map-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(138,159,126, 0.4);
+        }
+
+        .rsvp-section {
+            background: linear-gradient(135deg, rgb(138,159,126), #a8c49a);
+            padding: 50px 40px;
+            color: white;
+        }
+
+        .rsvp-form {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #f4f3ee;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            background: rgba(255,255,255,0.9);
+            color: #2d3436;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            background: white;
+            box-shadow: 0 0 20px rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #f4f3ee, white);
+            color: rgb(138,159,126);
+            border: none;
+            padding: 15px 40px;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .success-message {
+            background: rgba(255,255,255,0.2);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .error-message {
+            background: rgba(255,0,0,0.2);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-top: 20px;
+            display: none;
+            color: #fff;
+        }
+
+        .itinerary-section {
+            padding: 50px 40px;
+            background: linear-gradient(to bottom, white, #f8f9fa);
+        }
+
+        .timeline {
+            max-width: 600px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 30px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, rgb(138,159,126), #a8c49a);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 30px;
+            padding-left: 80px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 21px;
+            top: 5px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgb(138,159,126), #a8c49a);
+            border: 3px solid white;
+            box-shadow: 0 0 0 3px rgb(138,159,126);
+        }
+
+        .timeline-time {
+            font-weight: bold;
+            color: rgb(138,159,126);
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .timeline-content {
+            color: #2d3436;
+            line-height: 1.6;
+        }
+
+        /* Mobile-first responsive design */
+        @media (max-width: 768px) {
+            .container {
+                margin: 0;
+                border-radius: 0;
+                min-height: 100vh;
+            }
+            
+            .header {
+                padding: 40px 20px;
+            }
+            
+            .names {
+                font-size: 2.2rem;
+                line-height: 1.2;
+            }
+            
+            .ampersand {
+                font-size: 1.8rem;
+                margin: 0 10px;
+            }
+            
+            .tagline {
+                font-size: 1.1rem;
+                padding: 0 10px;
+            }
+            
+            .photo-section,
+            .events-section,
+            .itinerary-section,
+            .rsvp-section {
+                padding: 30px 20px;
+            }
+            
+            .section-title {
+                font-size: 2rem;
+            }
+            
+            .events-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .event-card {
+                padding: 25px 20px;
+            }
+            
+            .event-title {
+                font-size: 1.5rem;
+            }
+            
+            .photo-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .timeline {
+                padding: 0 10px;
+            }
+            
+            .timeline::before {
+                left: 20px;
+            }
+            
+            .timeline-item {
+                padding-left: 60px;
+            }
+            
+            .timeline-item::before {
+                left: 11px;
+                width: 18px;
+                height: 18px;
+            }
+            
+            .form-group input,
+            .form-group select,
+            .form-group textarea {
+                padding: 12px;
+                font-size: 16px; /* Prevents zoom on iOS */
+            }
+        }
+
+        @media (max-width: 480px) {
+            .names {
+                font-size: 1.8rem;
+            }
+            
+            .section-title {
+                font-size: 1.8rem;
+            }
+            
+            .event-title {
+                font-size: 1.3rem;
+            }
+            
+            .photo-section,
+            .events-section,
+            .itinerary-section,
+            .rsvp-section {
+                padding: 25px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header Section -->
+        <div class="header">
+            <h1 class="names">
+                Michelle<span class="ampersand">&</span>Andres
+            </h1>
+            <p class="tagline">Junto con sus familias, los invitan a celebrar su boda</p>
+        </div>
+
+        <!-- Photo Section -->
+        <div class="photo-section">
+            <h2 class="section-title">Nuestro Camino</h2>
+            <div class="photo-grid">
+                <div class="photo-placeholder">
+                    <span>Foto de Compromiso</span>
+                </div>
+                <div class="photo-placeholder">
+                    <span>Aventuras Juntos</span>
+                </div>
+                <div class="photo-placeholder">
+                    <span>Momentos Especiales</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Events Section -->
+        <div class="events-section">
+            <h2 class="section-title">Detalles de la Celebración</h2>
+            <div class="events-grid">
+                <!-- Ceremony Card -->
+                <div class="event-card">
+                    <h3 class="event-title">Ceremonia de Boda</h3>
+                    <div class="event-details">
+                        <p><strong>Fecha:</strong> Sábado, 15 de Agosto, 2025</p>
+                        <p><strong>Hora:</strong> 4:00 PM</p>
+                        <p><strong>Lugar:</strong> Capilla Santa María<br>
+                        123 Garden Street<br>
+                        Riverside, CA 92501</p>
+                        <a href="https://maps.google.com/?q=St.+Mary's+Chapel+123+Garden+Street+Riverside+CA+92501" 
+                           class="map-link" target="_blank">Ver en Google Maps</a>
+                    </div>
+                </div>
+
+                <!-- Reception Card -->
+                <div class="event-card">
+                    <h3 class="event-title">Recepción de Boda</h3>
+                    <div class="event-details">
+                        <p><strong>Fecha:</strong> Sábado, 15 de Agosto, 2025</p>
+                        <p><strong>Hora:</strong> 6:30 PM</p>
+                        <p><strong>Lugar:</strong> Club Campestre Riverside<br>
+                        456 Oak Avenue<br>
+                        Riverside, CA 92502</p>
+                        <a href="https://maps.google.com/?q=Riverside+Country+Club+456+Oak+Avenue+Riverside+CA+92502" 
+                           class="map-link" target="_blank">Ver en Google Maps</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Itinerary Section -->
+        <div class="itinerary-section">
+            <h2 class="section-title">Itinerario de la Noche</h2>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-time">4:00 PM</div>
+                    <div class="timeline-content">
+                        <strong>Ceremonia de Boda</strong><br>
+                        Acompáñanos mientras intercambiamos votos en la Capilla Santa María
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-time">5:00 PM</div>
+                    <div class="timeline-content">
+                        <strong>Hora del Cóctel</strong><br>
+                        Celebremos con bebidas y aperitivos ligeros
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-time">6:30 PM</div>
+                    <div class="timeline-content">
+                        <strong>Inicia la Recepción</strong><br>
+                        Nos trasladamos al Club Campestre Riverside para la cena y el baile
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-time">7:30 PM</div>
+                    <div class="timeline-content">
+                        <strong>Servicio de Cena</strong><br>
+                        Disfruten de una deliciosa cena de tres tiempos
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-time">9:00 PM</div>
+                    <div class="timeline-content">
+                        <strong>Primer Baile y Brindis</strong><br>
+                        Brindis, lágrimas y momentos memorables
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-time">9:30 PM</div>
+                    <div class="timeline-content">
+                        <strong>Baile y Celebración</strong><br>
+                        Festejemos toda la noche hasta medianoche
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RSVP Section -->
+        <div class="rsvp-section">
+            <h2 class="section-title">Confirmación de Asistencia</h2>
+            <form class="rsvp-form" id="rsvpForm">
+                <div class="form-group">
+                    <label for="guestName">Nombre Completo</label>
+                    <input type="text" id="guestName" name="guestName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Correo Electrónico</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="attendance">¿Podrás acompañarnos?</label>
+                    <select id="attendance" name="attendance" required>
+                        <option value="">Por favor selecciona</option>
+                        <option value="yes">¡Sí, estaré ahí!</option>
+                        <option value="no">Lo siento, no podré asistir</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="guestCount">Asientos disponibles para ti</label>
+                    <input type="number" id="guestCount" name="guestCount" 
+                           value="2" readonly 
+                           style="background: #f8f9fa; color: rgb(138,159,126); font-weight: bold;">
+                    <small style="color: #f4f3ee; margin-top: 5px; display: block;">
+                        Hemos reservado 2 asientos para tu grupo
+                    </small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="message">Mensaje personal para la pareja (opcional)</label>
+                    <textarea id="message" name="message" 
+                              placeholder="Comparte tus buenos deseos, recuerdos favoritos o pensamientos especiales para Michelle y Andres..."></textarea>
+                </div>
+                
+                <button type="submit" class="submit-btn">Enviar Confirmación</button>
+                
+                <div class="success-message" id="successMessage">
+                    <h3>¡Gracias por tu confirmación!</h3>
+                    <p>Estamos muy emocionados de celebrar contigo. Recibirás un correo de confirmación en breve.</p>
+                </div>
+
+                <div class="error-message" id="errorMessage">
+                    <h3>Error al enviar</h3>
+                    <p>Hubo un problema al enviar tu confirmación. Por favor intenta de nuevo.</p>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // RSVP Form Handler
+        document.getElementById('rsvpForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Get form data
+            const formData = new FormData(this);
+            const rsvpData = {
+                guestName: formData.get('guestName'),
+                email: formData.get('email'),
+                attendance: formData.get('attendance'),
+                guestCount: formData.get('guestCount'),
+                message: formData.get('message'),
+                timestamp: new Date().toISOString()
+            };
+            
+            // Submit RSVP
+            submitRSVP(rsvpData);
+        });
+        
+        async function submitRSVP(data) {
+            // Show loading state
+            const submitBtn = document.querySelector('.submit-btn');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Enviando...';
+            submitBtn.disabled = true;
+            
+            // Hide previous messages
+            document.getElementById('successMessage').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/rsvp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('RSVP submitted successfully:', result);
+                    
+                    // Show success message
+                    document.getElementById('rsvpForm').style.display = 'none';
+                    document.getElementById('successMessage').style.display = 'block';
+                } else {
+                    throw new Error('Server error');
+                }
+            } catch (error) {
+                console.error('Error submitting RSVP:', error);
+                document.getElementById('errorMessage').style.display = 'block';
+            } finally {
+                // Reset button
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
+        }
+        
+        // Add parallax effect to header
+        window.addEventListener('scroll', () => {
+            const scrolled = window.pageYOffset;
+            const header = document.querySelector('.header');
+            header.style.transform = `translateY(${scrolled * 0.5}px)`;
+        });
+    </script>
+</body>
+</html>
