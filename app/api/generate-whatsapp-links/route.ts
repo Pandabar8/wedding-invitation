@@ -5,6 +5,8 @@ export async function POST(request: NextRequest) {
   try {
     const { guests } = await request.json()
 
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://wedding-invitation-final-zeta.vercel.app"
+
     if (!guests || !Array.isArray(guests)) {
       return NextResponse.json({ error: "Guest list is required" }, { status: 400 })
     }
@@ -17,11 +19,11 @@ export async function POST(request: NextRequest) {
       const inviteMessage =
         `Hola ${guest.name}!\n\n` +
         `Es con gran placer que Michelle y Andres los invitan a su boda.\n\n` +
-        `FECHA: Sabado, 27 de Diciembre, 2025\n` +
-        `CEREMONIA: 4:00 PM - Parroquia ONUVA\n` +
-        `RECEPCION: 6:15 PM - Finca La Quadra\n\n` +
+        `FECHA: Sabado, 15 de Agosto, 2025\n` +
+        `CEREMONIA: 4:00 PM - Capilla Santa Maria\n` +
+        `RECEPCION: 6:30 PM - Club Campestre Riverside\n\n` +
         `Tenemos ${guest.seatCount} asiento${guest.seatCount > 1 ? "s" : ""} reservado${guest.seatCount > 1 ? "s" : ""} para ustedes.\n\n` +
-        `Por favor confirmen su asistencia aqui: ${process.env.NEXT_PUBLIC_SITE_URL}\n\n` +
+        `Por favor confirmen su asistencia aqui: ${siteUrl}\n\n` +
         `Con amor,\n` +
         `Michelle y Andres`
 
