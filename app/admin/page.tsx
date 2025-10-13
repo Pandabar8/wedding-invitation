@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
 import type { RSVP } from "@/lib/supabase"
@@ -24,7 +26,7 @@ export default function AdminDashboard() {
   const [rsvps, setRsvps] = useState<RSVP[]>([])
   const [guests, setGuests] = useState<Guest[]>([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<"rsvps" | "invitations">("invitations") // Start on invitations tab
+  const [activeTab, setActiveTab] = useState<"rsvps" | "invitations">("invitations")
   const [newGuest, setNewGuest] = useState({ name: "", phone: "", seatCount: 2 })
   const [sendingInvitation, setSendingInvitation] = useState<number | null>(null)
   const [bulkSending, setBulkSending] = useState(false)
@@ -45,10 +47,8 @@ export default function AdminDashboard() {
 
   const fetchRSVPs = async () => {
     try {
-      // First try to fetch with actual_guest_count column
       let { data, error } = await supabase.from("rsvps").select("*").order("created_at", { ascending: false })
 
-      // If error mentions the column doesn't exist, try without it
       if (error && error.message.includes("actual_guest_count")) {
         console.log("actual_guest_count column doesn't exist, fetching without it")
         setHasActualGuestCountColumn(false)
@@ -64,7 +64,6 @@ export default function AdminDashboard() {
 
       setRsvps(data || [])
 
-      // Calculate stats using actual guest counts if available, otherwise use guest_count
       const total = data?.length || 0
       const attending = data?.filter((r) => r.attendance === "yes").length || 0
       const notAttending = data?.filter((r) => r.attendance === "no").length || 0
@@ -124,14 +123,61 @@ export default function AdminDashboard() {
     }
   }
 
+  const toggleInvitationStatus = (id: number) => {
+    const updatedGuests = guests.map((g) => (g.id === id ? { ...g, invitationSent: !g.invitationSent } : g))
+    saveGuestList(updatedGuests)
+  }
+
+  const markAllAsSent = () => {
+    if (confirm("¿Marcar todas las invitaciones como enviadas?")) {
+      const updatedGuests = guests.map((g) => ({ ...g, invitationSent: true }))
+      saveGuestList(updatedGuests)
+      alert("✅ Todas las invitaciones marcadas como enviadas")
+    }
+  }
+
+  const exportGuestList = () => {
+    const dataStr = JSON.stringify(guests, null, 2)
+    const dataBlob = new Blob([dataStr], { type: "application/json" })
+    const url = URL.createObjectURL(dataBlob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `wedding-guests-${new Date().toISOString().split("T")[0]}.json`
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const importGuestListFromFile = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      try {
+        const importedGuests = JSON.parse(e.target?.result as string)
+        if (Array.isArray(importedGuests)) {
+          if (confirm(`¿Importar ${importedGuests.length} invitados? Esto reemplazará tu lista actual.`)) {
+            saveGuestList(importedGuests)
+            alert(`✅ ${importedGuests.length} invitados importados exitosamente!`)
+          }
+        } else {
+          alert("❌ Formato de archivo inválido")
+        }
+      } catch (error) {
+        alert("❌ Error al leer el archivo")
+      }
+    }
+    reader.readAsText(file)
+  }
+
   const importGuestList = () => {
     const csvText = prompt(
       "Pega tu lista de invitados en formato CSV:\n\n" +
-        "Formato: Nombre,Teléfono,Asientos\n" +
-        "Ejemplo:\n" +
-        "Juan Pérez,+50377428772,2\n" +
-        "María García,+50377428773,4\n" +
-        "Carlos López,+50377428774,1",
+      "Formato: Nombre,Teléfono,Asientos\n" +
+      "Ejemplo:\n" +
+      "Juan Pérez,+50377428772,2\n" +
+      "María García,+50377428773,4\n" +
+      "Carlos López,+50377428774,1",
     )
 
     if (!csvText) return
@@ -203,7 +249,7 @@ export default function AdminDashboard() {
                 </span>
                 <div>
                   <p className="font-semibold">Agregar Invitados</p>
-                  <p>Usa el formulario abajo o importa una lista CSV</p>
+                  <p>Usa el formulario abajo o importa una lista CSV/JSON</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -234,21 +280,19 @@ export default function AdminDashboard() {
             <nav className="-mb-px flex space-x-8">
               <button
                 onClick={() => setActiveTab("invitations")}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === "invitations"
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700"
-                }`}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === "invitations"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700"
+                  }`}
               >
                 Gestionar Invitados ({guests.length})
               </button>
               <button
                 onClick={() => setActiveTab("rsvps")}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === "rsvps"
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700"
-                }`}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === "rsvps"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700"
+                  }`}
               >
                 RSVPs Recibidos ({stats.total})
               </button>
@@ -295,19 +339,47 @@ export default function AdminDashboard() {
             {/* Bulk Actions */}
             <div className="bg-white rounded-lg shadow p-6 mb-8">
               <h2 className="text-xl font-semibold text-gray-800 mb-4">Acciones Masivas</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <button
                   onClick={importGuestList}
                   className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors"
                 >
-                  Importar Lista CSV
+                  Importar CSV
                 </button>
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept=".json"
+                    onChange={importGuestListFromFile}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                  <button className="w-full bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors">
+                    Importar JSON
+                  </button>
+                </div>
+                <button
+                  onClick={exportGuestList}
+                  disabled={guests.length === 0}
+                  className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                >
+                  Exportar JSON
+                </button>
+                <button
+                  onClick={markAllAsSent}
+                  disabled={guests.length === 0}
+                  className="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700 transition-colors disabled:opacity-50"
+                >
+                  Marcar Todas Enviadas
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                 <button
                   onClick={() => window.open("/admin/bulk-sender", "_blank")}
                   disabled={guests.length === 0}
                   className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors disabled:opacity-50"
                 >
-                  Ir a Envío Masivo
+                  🚀 Ir a Envío Masivo
                 </button>
                 <button
                   onClick={clearAllGuests}
@@ -338,8 +410,8 @@ export default function AdminDashboard() {
                 <h2 className="text-xl font-semibold text-gray-800">Lista de Invitados ({guests.length})</h2>
                 {guests.length > 0 && (
                   <p className="text-sm text-gray-600 mt-1">
-                    {guests.filter((g) => !g.invitationSent).length} pendientes •
-                    {guests.filter((g) => g.invitationSent).length} enviadas •
+                    {guests.filter((g) => !g.invitationSent).length} pendientes •{" "}
+                    {guests.filter((g) => g.invitationSent).length} enviadas •{" "}
                     {guests.reduce((sum, g) => sum + g.seatCount, 0)} asientos totales
                   </p>
                 )}
@@ -348,7 +420,7 @@ export default function AdminDashboard() {
               {guests.length === 0 ? (
                 <div className="p-8 text-center text-gray-500">
                   <p className="text-lg mb-2">No hay invitados agregados</p>
-                  <p>Agrega invitados usando el formulario de arriba o importa una lista CSV</p>
+                  <p>Agrega invitados usando el formulario de arriba o importa una lista</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
@@ -382,13 +454,15 @@ export default function AdminDashboard() {
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{guest.seatCount}</td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex flex-col gap-1">
-                              <span
-                                className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                  guest.invitationSent ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
-                                }`}
+                              <button
+                                onClick={() => toggleInvitationStatus(guest.id!)}
+                                className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full cursor-pointer transition-colors ${guest.invitationSent
+                                  ? "bg-green-100 text-green-800 hover:bg-green-200"
+                                  : "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+                                  }`}
                               >
-                                {guest.invitationSent ? "Enviada" : "Pendiente"}
-                              </span>
+                                {guest.invitationSent ? "✓ Enviada" : "○ Pendiente"}
+                              </button>
                               {rsvps.some((r) => r.guest_name.toLowerCase().includes(guest.name.toLowerCase())) && (
                                 <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
                                   RSVP Recibido
@@ -482,9 +556,8 @@ export default function AdminDashboard() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
-                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              rsvp.attendance === "yes" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                            }`}
+                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${rsvp.attendance === "yes" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                              }`}
                           >
                             {rsvp.attendance === "yes" ? "Attending" : "Not Attending"}
                           </span>
