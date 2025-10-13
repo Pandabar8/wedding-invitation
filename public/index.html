@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Michelle & Andres - Wedding Invitation</title>
+    <title>Andres & Michelle - Wedding Invitation</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Cormorant+Garamond:wght@300;400;500;600&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
         * {
@@ -265,6 +265,14 @@
         .photo-placeholder:hover {
             transform: translateY(-10px);
             box-shadow: var(--shadow-lg);
+        }
+
+        /* Small icon helper for event and gift icons */
+        .small-icon {
+            width: 64px;
+            height: auto;
+            object-fit: contain;
+            display: inline-block;
         }
 
         .countdown-section {
@@ -1182,7 +1190,7 @@
         <div class="header">
             <p class="invitation-text fade-in">Te invitamos a celebrar</p>
             <h1 class="names fade-in">
-                Michelle<span class="ampersand">&</span>Andres
+                Andres<span class="ampersand">&</span>Michelle
             </h1>
             <div class="divider"></div>
             <p class="tagline fade-in">Nuestra Boda</p>
@@ -1245,7 +1253,9 @@
             </div>
             <div class="events-grid">
                 <div class="event-card slide-in-left">
-                    <div class="event-icon">⛪</div>
+                    <div class="event-icon">
+                        <img src="church.png" alt="Imagen iglesia" class="small-icon" style="filter: invert(1);">
+                    </div>
                     <h3 class="event-title">Ceremonia</h3>
                     <div class="event-details">
                         <p><strong>Hora:</strong> 4:00 PM</p>
@@ -1256,7 +1266,9 @@
                     </div>
                 </div>
                 <div class="event-card slide-in-right">
-                    <div class="event-icon">🥂</div>
+                    <div class="event-icon">
+                        <img src="cheers.png" alt="Copas de champan" class="small-icon" style="filter: invert(1);">
+                    </div>
                     <h3 class="event-title">Recepción</h3>
                     <div class="event-details">
                         <p><strong>Hora:</strong> 6:15 PM</p>
@@ -1371,7 +1383,9 @@
                 <p class="section-subtitle">Una Noche Especial</p>
             </div>
             <div class="adults-only-content fade-in">
-                <div class="adults-only-icon">🍷</div>
+                <div class="adults-only-icon">
+                    <img src="wine-glass.png" alt="Copa de vino" class="small-icon" style="filter: invert(1);">
+                </div>
                 <p class="adults-only-message">
                     Aunque amamos a sus pequeños, esta será una celebración solo para adultos.<br>
                     Les agradecemos su comprensión y esperamos que disfruten de una noche especial con nosotros.
@@ -1385,9 +1399,12 @@
         <!-- Gifts -->
         <div class="gift-section">
             <div class="section-header fade-in">
-                <div class="gift-icon">🎁</div>
+                
                 <h2 class="section-title">Regalos</h2>
             </div>
+            <div class="gift-icon">
+                    <img src="gift.png" alt="Regalo" class="small-icon">
+                </div>
             <div class="gift-content fade-in">
                 <p class="gift-message">
                     Agradecemos de corazón su obsequio en sobre para acompañar este día especial.
