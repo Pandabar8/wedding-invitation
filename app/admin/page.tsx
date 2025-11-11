@@ -135,28 +135,10 @@ export default function AdminDashboard() {
   }
 
   const getGuestsNeedingFollowup = () => {
-    console.log("[v0] === RSVP Matching Debug ===")
-    console.log("[v0] Total guests with invitations sent:", guests.filter((g) => g.invitationSent).length)
-    console.log("[v0] Total RSVPs received:", rsvps.length)
-
     const guestsNeedingFollowup = guests.filter((guest) => {
-      // Guest must have been sent an invitation
       if (!guest.invitationSent) return false
-
-      // Check if guest has responded via RSVP
-      const matchingRSVP = rsvps.find((rsvp) => namesMatch(guest.name, rsvp.guest_name))
-
-      if (!matchingRSVP) {
-        console.log("[v0] No RSVP found for:", guest.name)
-        return true
-      } else {
-        console.log("[v0] RSVP found for:", guest.name, "->", matchingRSVP.guest_name)
-        return false
-      }
+      return !guest.rsvpReceived
     })
-
-    console.log("[v0] Guests needing follow-up:", guestsNeedingFollowup.length)
-    console.log("[v0] === End Debug ===")
 
     return guestsNeedingFollowup
   }
@@ -190,6 +172,11 @@ export default function AdminDashboard() {
 
   const toggleInvitationStatus = (id: number) => {
     const updatedGuests = guests.map((g) => (g.id === id ? { ...g, invitationSent: !g.invitationSent } : g))
+    saveGuestList(updatedGuests)
+  }
+
+  const toggleRSVPStatus = (id: number) => {
+    const updatedGuests = guests.map((g) => (g.id === id ? { ...g, rsvpReceived: !g.rsvpReceived } : g))
     saveGuestList(updatedGuests)
   }
 
@@ -297,7 +284,6 @@ export default function AdminDashboard() {
       return
     }
 
-    // Store followup guests in localStorage for the bulk sender to use
     localStorage.setItem("wedding-followup-guests", JSON.stringify(followupGuests))
     window.open("/admin/bulk-sender?mode=followup", "_blank")
   }
@@ -318,7 +304,6 @@ export default function AdminDashboard() {
       <div className="max-w-6xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-800 mb-8">Wedding Management Dashboard</h1>
 
-        {/* Quick Start Guide */}
         {guests.length === 0 && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
             <h2 className="text-xl font-semibold text-blue-800 mb-4">Guía de Inicio Rápido</h2>
@@ -354,7 +339,6 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Tabs */}
         <div className="mb-8">
           <div className="border-b border-gray-200">
             <nav className="-mb-px flex space-x-8">
@@ -391,7 +375,6 @@ export default function AdminDashboard() {
 
         {activeTab === "invitations" && (
           <>
-            {/* Add Guest Form */}
             <div className="bg-white rounded-lg shadow p-6 mb-8">
               <h2 className="text-xl font-semibold text-gray-800 mb-4">Agregar Invitado Individual</h2>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -425,7 +408,6 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Bulk Actions */}
             <div className="bg-white rounded-lg shadow p-6 mb-8">
               <h2 className="text-xl font-semibold text-gray-800 mb-4">Acciones Masivas</h2>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -479,7 +461,6 @@ export default function AdminDashboard() {
                 </button>
               </div>
 
-              {/* CSV Format Help */}
               <div className="mt-4 p-4 bg-gray-50 rounded-md">
                 <h3 className="font-semibold text-gray-700 mb-2">Formato CSV:</h3>
                 <code className="text-sm text-gray-600 block">
@@ -493,7 +474,6 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Guest List */}
             <div className="bg-white rounded-lg shadow overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-200">
                 <h2 className="text-xl font-semibold text-gray-800">Lista de Invitados ({guests.length})</h2>
@@ -552,10 +532,16 @@ export default function AdminDashboard() {
                               >
                                 {guest.invitationSent ? "✓ Enviada" : "○ Pendiente"}
                               </button>
-                              {rsvps.some((r) => namesMatch(guest.name, r.guest_name)) && (
-                                <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                                  RSVP Recibido
-                                </span>
+                              {guest.invitationSent && (
+                                <button
+                                  onClick={() => toggleRSVPStatus(guest.id!)}
+                                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full cursor-pointer transition-colors ${guest.rsvpReceived
+                                      ? "bg-blue-100 text-blue-800 hover:bg-blue-200"
+                                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                    }`}
+                                >
+                                  {guest.rsvpReceived ? "✓ RSVP Recibido" : "○ RSVP Pendiente"}
+                                </button>
                               )}
                             </div>
                           </td>
@@ -579,7 +565,6 @@ export default function AdminDashboard() {
 
         {activeTab === "rsvps" && (
           <>
-            {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
               <div className="bg-white p-6 rounded-lg shadow">
                 <h3 className="text-lg font-semibold text-gray-600">Total RSVPs</h3>
@@ -606,7 +591,6 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* RSVPs Table */}
             <div className="bg-white rounded-lg shadow overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-200">
                 <h2 className="text-xl font-semibold text-gray-800">All RSVPs</h2>
@@ -684,7 +668,6 @@ export default function AdminDashboard() {
 
         {activeTab === "followups" && (
           <>
-            {/* Follow-up Alert */}
             <div className="bg-orange-50 border border-orange-200 rounded-lg p-6 mb-8">
               <h2 className="text-xl font-semibold text-orange-800 mb-4">Seguimiento de RSVPs Pendientes</h2>
               <p className="text-orange-700 mb-4">
@@ -721,7 +704,6 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
               <div className="bg-white p-6 rounded-lg shadow">
                 <h3 className="text-lg font-semibold text-gray-600">Invitaciones Enviadas</h3>
@@ -729,7 +711,7 @@ export default function AdminDashboard() {
               </div>
               <div className="bg-white p-6 rounded-lg shadow">
                 <h3 className="text-lg font-semibold text-gray-600">RSVPs Recibidos</h3>
-                <p className="text-3xl font-bold text-green-600">{stats.total}</p>
+                <p className="text-3xl font-bold text-green-600">{guests.filter((g) => g.rsvpReceived).length}</p>
               </div>
               <div className="bg-white p-6 rounded-lg shadow">
                 <h3 className="text-lg font-semibold text-gray-600">Sin Respuesta</h3>
@@ -739,14 +721,16 @@ export default function AdminDashboard() {
                 <h3 className="text-lg font-semibold text-gray-600">Tasa de Respuesta</h3>
                 <p className="text-3xl font-bold text-purple-600">
                   {guests.filter((g) => g.invitationSent).length > 0
-                    ? Math.round((stats.total / guests.filter((g) => g.invitationSent).length) * 100)
+                    ? Math.round(
+                      (guests.filter((g) => g.rsvpReceived).length / guests.filter((g) => g.invitationSent).length) *
+                      100,
+                    )
                     : 0}
                   %
                 </p>
               </div>
             </div>
 
-            {/* Action Button */}
             <div className="bg-white rounded-lg shadow p-6 mb-8">
               <h2 className="text-xl font-semibold text-gray-800 mb-4">Enviar Recordatorios</h2>
               <div className="text-center">
@@ -762,7 +746,6 @@ export default function AdminDashboard() {
                 )}
               </div>
 
-              {/* Message Preview */}
               {followupGuests.length > 0 && (
                 <div className="mt-6 p-4 bg-gray-50 rounded-md">
                   <h3 className="font-semibold text-gray-700 mb-2">Vista Previa del Mensaje de Seguimiento:</h3>
@@ -788,7 +771,6 @@ Michelle y Andres`}
               )}
             </div>
 
-            {/* Guests Needing Follow-up Table */}
             <div className="bg-white rounded-lg shadow overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-200">
                 <h2 className="text-xl font-semibold text-gray-800">
