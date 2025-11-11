@@ -13,6 +13,7 @@ interface Guest {
   seatCount: number
   invitationSent: boolean
   rsvpReceived: boolean
+  rsvpDeclined: boolean
 }
 
 interface BulkResult {
@@ -137,7 +138,7 @@ export default function AdminDashboard() {
   const getGuestsNeedingFollowup = () => {
     const guestsNeedingFollowup = guests.filter((guest) => {
       if (!guest.invitationSent) return false
-      return !guest.rsvpReceived
+      return !guest.rsvpReceived && !guest.rsvpDeclined
     })
 
     return guestsNeedingFollowup
@@ -156,6 +157,7 @@ export default function AdminDashboard() {
       seatCount: newGuest.seatCount,
       invitationSent: false,
       rsvpReceived: false,
+      rsvpDeclined: false,
     }
 
     const updatedGuests = [...guests, guest]
@@ -177,6 +179,11 @@ export default function AdminDashboard() {
 
   const toggleRSVPStatus = (id: number) => {
     const updatedGuests = guests.map((g) => (g.id === id ? { ...g, rsvpReceived: !g.rsvpReceived } : g))
+    saveGuestList(updatedGuests)
+  }
+
+  const toggleDeclinedStatus = (id: number) => {
+    const updatedGuests = guests.map((g) => (g.id === id ? { ...g, rsvpDeclined: !g.rsvpDeclined } : g))
     saveGuestList(updatedGuests)
   }
 
@@ -256,6 +263,7 @@ export default function AdminDashboard() {
           seatCount: Number.parseInt(seatCount?.trim()) || 2,
           invitationSent: false,
           rsvpReceived: false,
+          rsvpDeclined: false,
         })
       }
 
@@ -533,15 +541,26 @@ export default function AdminDashboard() {
                                 {guest.invitationSent ? "✓ Enviada" : "○ Pendiente"}
                               </button>
                               {guest.invitationSent && (
-                                <button
-                                  onClick={() => toggleRSVPStatus(guest.id!)}
-                                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full cursor-pointer transition-colors ${guest.rsvpReceived
-                                      ? "bg-blue-100 text-blue-800 hover:bg-blue-200"
-                                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                    }`}
-                                >
-                                  {guest.rsvpReceived ? "✓ RSVP Recibido" : "○ RSVP Pendiente"}
-                                </button>
+                                <>
+                                  <button
+                                    onClick={() => toggleRSVPStatus(guest.id!)}
+                                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full cursor-pointer transition-colors ${guest.rsvpReceived
+                                        ? "bg-blue-100 text-blue-800 hover:bg-blue-200"
+                                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                      }`}
+                                  >
+                                    {guest.rsvpReceived ? "✓ RSVP Recibido" : "○ RSVP Pendiente"}
+                                  </button>
+                                  <button
+                                    onClick={() => toggleDeclinedStatus(guest.id!)}
+                                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full cursor-pointer transition-colors ${guest.rsvpDeclined
+                                        ? "bg-red-100 text-red-800 hover:bg-red-200"
+                                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                      }`}
+                                  >
+                                    {guest.rsvpDeclined ? "✓ RSVP Recibido, no va" : "○ RSVP Recibido, no va"}
+                                  </button>
+                                </>
                               )}
                             </div>
                           </td>
@@ -704,7 +723,7 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
               <div className="bg-white p-6 rounded-lg shadow">
                 <h3 className="text-lg font-semibold text-gray-600">Invitaciones Enviadas</h3>
                 <p className="text-3xl font-bold text-blue-600">{guests.filter((g) => g.invitationSent).length}</p>
@@ -712,6 +731,10 @@ export default function AdminDashboard() {
               <div className="bg-white p-6 rounded-lg shadow">
                 <h3 className="text-lg font-semibold text-gray-600">RSVPs Recibidos</h3>
                 <p className="text-3xl font-bold text-green-600">{guests.filter((g) => g.rsvpReceived).length}</p>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow">
+                <h3 className="text-lg font-semibold text-gray-600">No Asisten</h3>
+                <p className="text-3xl font-bold text-red-600">{guests.filter((g) => g.rsvpDeclined).length}</p>
               </div>
               <div className="bg-white p-6 rounded-lg shadow">
                 <h3 className="text-lg font-semibold text-gray-600">Sin Respuesta</h3>
@@ -722,7 +745,8 @@ export default function AdminDashboard() {
                 <p className="text-3xl font-bold text-purple-600">
                   {guests.filter((g) => g.invitationSent).length > 0
                     ? Math.round(
-                      (guests.filter((g) => g.rsvpReceived).length / guests.filter((g) => g.invitationSent).length) *
+                      ((guests.filter((g) => g.rsvpReceived).length + guests.filter((g) => g.rsvpDeclined).length) /
+                        guests.filter((g) => g.invitationSent).length) *
                       100,
                     )
                     : 0}
