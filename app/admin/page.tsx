@@ -96,20 +96,69 @@ export default function AdminDashboard() {
     setGuests(updatedGuests)
   }
 
+  const normalizeString = (str: string): string => {
+    return str
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "") // Remove accents
+      .replace(/[^\w\s]/g, "") // Remove punctuation
+      .trim()
+  }
+
+  const namesMatch = (guestName: string, rsvpName: string): boolean => {
+    const normalizedGuest = normalizeString(guestName)
+    const normalizedRSVP = normalizeString(rsvpName)
+
+    // Exact match
+    if (normalizedGuest === normalizedRSVP) {
+      console.log("[v0] Exact match:", guestName, "===", rsvpName)
+      return true
+    }
+
+    // Split into words for partial matching
+    const guestWords = normalizedGuest.split(/\s+/)
+    const rsvpWords = normalizedRSVP.split(/\s+/)
+
+    // Check if at least 2 words match (or all words if less than 2)
+    const matchingWords = guestWords.filter((word) =>
+      rsvpWords.some((rsvpWord) => word === rsvpWord || rsvpWord === word),
+    )
+
+    const minMatches = Math.min(2, Math.min(guestWords.length, rsvpWords.length))
+    const isMatch = matchingWords.length >= minMatches
+
+    if (isMatch) {
+      console.log("[v0] Partial match:", guestName, "<=>", rsvpName, `(${matchingWords.length} words)`)
+    }
+
+    return isMatch
+  }
+
   const getGuestsNeedingFollowup = () => {
-    return guests.filter((guest) => {
+    console.log("[v0] === RSVP Matching Debug ===")
+    console.log("[v0] Total guests with invitations sent:", guests.filter((g) => g.invitationSent).length)
+    console.log("[v0] Total RSVPs received:", rsvps.length)
+
+    const guestsNeedingFollowup = guests.filter((guest) => {
       // Guest must have been sent an invitation
       if (!guest.invitationSent) return false
 
       // Check if guest has responded via RSVP
-      const hasRSVP = rsvps.some(
-        (rsvp) =>
-          rsvp.guest_name.toLowerCase().includes(guest.name.toLowerCase()) ||
-          guest.name.toLowerCase().includes(rsvp.guest_name.toLowerCase()),
-      )
+      const matchingRSVP = rsvps.find((rsvp) => namesMatch(guest.name, rsvp.guest_name))
 
-      return !hasRSVP
+      if (!matchingRSVP) {
+        console.log("[v0] No RSVP found for:", guest.name)
+        return true
+      } else {
+        console.log("[v0] RSVP found for:", guest.name, "->", matchingRSVP.guest_name)
+        return false
+      }
     })
+
+    console.log("[v0] Guests needing follow-up:", guestsNeedingFollowup.length)
+    console.log("[v0] === End Debug ===")
+
+    return guestsNeedingFollowup
   }
 
   const addGuest = () => {
@@ -417,14 +466,14 @@ export default function AdminDashboard() {
                 <button
                   onClick={() => window.open("/admin/bulk-sender", "_blank")}
                   disabled={unsentGuests.length === 0}
-                  className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors disabled:opacity-50"
+                  className="bg-purple-600 text-white px-8 py-3 rounded-lg hover:bg-purple-700 disabled:opacity-50 text-lg font-semibold"
                 >
                   🚀 Ir a Envío Masivo ({unsentGuests.length} pendientes)
                 </button>
                 <button
                   onClick={clearAllGuests}
                   disabled={guests.length === 0}
-                  className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors disabled:opacity-50"
+                  className="bg-red-600 text-white px-8 py-3 rounded-lg hover:bg-red-700 disabled:opacity-50 text-lg font-semibold"
                 >
                   Limpiar Lista
                 </button>
@@ -503,7 +552,7 @@ export default function AdminDashboard() {
                               >
                                 {guest.invitationSent ? "✓ Enviada" : "○ Pendiente"}
                               </button>
-                              {rsvps.some((r) => r.guest_name.toLowerCase().includes(guest.name.toLowerCase())) && (
+                              {rsvps.some((r) => namesMatch(guest.name, r.guest_name)) && (
                                 <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
                                   RSVP Recibido
                                 </span>
