@@ -26,7 +26,7 @@ export default function AdminDashboard() {
   const [rsvps, setRsvps] = useState<RSVP[]>([])
   const [guests, setGuests] = useState<Guest[]>([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<"rsvps" | "invitations">("invitations")
+  const [activeTab, setActiveTab] = useState<"rsvps" | "invitations" | "followups">("invitations")
   const [newGuest, setNewGuest] = useState({ name: "", phone: "", seatCount: 2 })
   const [sendingInvitation, setSendingInvitation] = useState<number | null>(null)
   const [bulkSending, setBulkSending] = useState(false)
@@ -94,6 +94,22 @@ export default function AdminDashboard() {
   const saveGuestList = (updatedGuests: Guest[]) => {
     localStorage.setItem("wedding-guest-list", JSON.stringify(updatedGuests))
     setGuests(updatedGuests)
+  }
+
+  const getGuestsNeedingFollowup = () => {
+    return guests.filter((guest) => {
+      // Guest must have been sent an invitation
+      if (!guest.invitationSent) return false
+
+      // Check if guest has responded via RSVP
+      const hasRSVP = rsvps.some(
+        (rsvp) =>
+          rsvp.guest_name.toLowerCase().includes(guest.name.toLowerCase()) ||
+          guest.name.toLowerCase().includes(rsvp.guest_name.toLowerCase()),
+      )
+
+      return !hasRSVP
+    })
   }
 
   const addGuest = () => {
@@ -225,6 +241,18 @@ export default function AdminDashboard() {
     }
   }
 
+  const openFollowupSender = () => {
+    const followupGuests = getGuestsNeedingFollowup()
+    if (followupGuests.length === 0) {
+      alert("¡Todos los invitados ya han respondido! 🎉")
+      return
+    }
+
+    // Store followup guests in localStorage for the bulk sender to use
+    localStorage.setItem("wedding-followup-guests", JSON.stringify(followupGuests))
+    window.open("/admin/bulk-sender?mode=followup", "_blank")
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -232,6 +260,9 @@ export default function AdminDashboard() {
       </div>
     )
   }
+
+  const followupGuests = getGuestsNeedingFollowup()
+  const unsentGuests = guests.filter((g) => !g.invitationSent)
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
@@ -281,8 +312,8 @@ export default function AdminDashboard() {
               <button
                 onClick={() => setActiveTab("invitations")}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === "invitations"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700"
                   }`}
               >
                 Gestionar Invitados ({guests.length})
@@ -290,11 +321,20 @@ export default function AdminDashboard() {
               <button
                 onClick={() => setActiveTab("rsvps")}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === "rsvps"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700"
                   }`}
               >
                 RSVPs Recibidos ({stats.total})
+              </button>
+              <button
+                onClick={() => setActiveTab("followups")}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === "followups"
+                    ? "border-orange-500 text-orange-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700"
+                  }`}
+              >
+                Seguimiento RSVP ({followupGuests.length})
               </button>
             </nav>
           </div>
@@ -376,10 +416,10 @@ export default function AdminDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                 <button
                   onClick={() => window.open("/admin/bulk-sender", "_blank")}
-                  disabled={guests.length === 0}
+                  disabled={unsentGuests.length === 0}
                   className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors disabled:opacity-50"
                 >
-                  🚀 Ir a Envío Masivo
+                  🚀 Ir a Envío Masivo ({unsentGuests.length} pendientes)
                 </button>
                 <button
                   onClick={clearAllGuests}
@@ -457,8 +497,8 @@ export default function AdminDashboard() {
                               <button
                                 onClick={() => toggleInvitationStatus(guest.id!)}
                                 className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full cursor-pointer transition-colors ${guest.invitationSent
-                                  ? "bg-green-100 text-green-800 hover:bg-green-200"
-                                  : "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+                                    ? "bg-green-100 text-green-800 hover:bg-green-200"
+                                    : "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
                                   }`}
                               >
                                 {guest.invitationSent ? "✓ Enviada" : "○ Pendiente"}
@@ -589,6 +629,170 @@ export default function AdminDashboard() {
                   </tbody>
                 </table>
               </div>
+            </div>
+          </>
+        )}
+
+        {activeTab === "followups" && (
+          <>
+            {/* Follow-up Alert */}
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-6 mb-8">
+              <h2 className="text-xl font-semibold text-orange-800 mb-4">Seguimiento de RSVPs Pendientes</h2>
+              <p className="text-orange-700 mb-4">
+                Estos invitados recibieron su invitación pero aún no han confirmado su asistencia vía el enlace.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-orange-700">
+                <div className="flex items-start gap-3">
+                  <span className="bg-orange-200 text-orange-800 rounded-full w-6 h-6 flex items-center justify-center font-bold text-xs">
+                    1
+                  </span>
+                  <div>
+                    <p className="font-semibold">Revisa la Lista</p>
+                    <p>Verifica quiénes no han respondido</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="bg-orange-200 text-orange-800 rounded-full w-6 h-6 flex items-center justify-center font-bold text-xs">
+                    2
+                  </span>
+                  <div>
+                    <p className="font-semibold">Envía Recordatorio</p>
+                    <p>Usa el mensaje de seguimiento personalizado</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="bg-orange-200 text-orange-800 rounded-full w-6 h-6 flex items-center justify-center font-bold text-xs">
+                    3
+                  </span>
+                  <div>
+                    <p className="font-semibold">Monitorea Respuestas</p>
+                    <p>Revisa la pestaña de RSVPs</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+              <div className="bg-white p-6 rounded-lg shadow">
+                <h3 className="text-lg font-semibold text-gray-600">Invitaciones Enviadas</h3>
+                <p className="text-3xl font-bold text-blue-600">{guests.filter((g) => g.invitationSent).length}</p>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow">
+                <h3 className="text-lg font-semibold text-gray-600">RSVPs Recibidos</h3>
+                <p className="text-3xl font-bold text-green-600">{stats.total}</p>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow">
+                <h3 className="text-lg font-semibold text-gray-600">Sin Respuesta</h3>
+                <p className="text-3xl font-bold text-orange-600">{followupGuests.length}</p>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow">
+                <h3 className="text-lg font-semibold text-gray-600">Tasa de Respuesta</h3>
+                <p className="text-3xl font-bold text-purple-600">
+                  {guests.filter((g) => g.invitationSent).length > 0
+                    ? Math.round((stats.total / guests.filter((g) => g.invitationSent).length) * 100)
+                    : 0}
+                  %
+                </p>
+              </div>
+            </div>
+
+            {/* Action Button */}
+            <div className="bg-white rounded-lg shadow p-6 mb-8">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">Enviar Recordatorios</h2>
+              <div className="text-center">
+                <button
+                  onClick={openFollowupSender}
+                  disabled={followupGuests.length === 0}
+                  className="bg-orange-600 text-white px-8 py-3 rounded-lg hover:bg-orange-700 disabled:opacity-50 text-lg font-semibold"
+                >
+                  📨 Enviar Recordatorios ({followupGuests.length} invitados)
+                </button>
+                {followupGuests.length === 0 && (
+                  <p className="text-gray-500 mt-2">¡Todos los invitados ya han respondido! 🎉</p>
+                )}
+              </div>
+
+              {/* Message Preview */}
+              {followupGuests.length > 0 && (
+                <div className="mt-6 p-4 bg-gray-50 rounded-md">
+                  <h3 className="font-semibold text-gray-700 mb-2">Vista Previa del Mensaje de Seguimiento:</h3>
+                  <div className="text-sm text-gray-600 whitespace-pre-line bg-white p-4 rounded border border-gray-200">
+                    {`Hola [Nombre]!
+
+Esperamos que estén bien. Les enviamos este recordatorio amable para confirmar su asistencia a nuestra boda.
+
+FECHA: Sabado, 15 de Agosto, 2025
+CEREMONIA: 4:00 PM - Capilla Santa Maria
+RECEPCION: 6:30 PM - Club Campestre Riverside
+
+Tenemos [X] asiento(s) reservado(s) para ustedes.
+
+Por favor confirmen su asistencia aqui: ${process.env.NEXT_PUBLIC_SITE_URL || "https://wedding-invitation-final-zeta.vercel.app"}
+
+¡Esperamos verlos pronto!
+
+Con amor,
+Michelle y Andres`}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Guests Needing Follow-up Table */}
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-800">
+                  Invitados Sin Respuesta ({followupGuests.length})
+                </h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Estos invitados recibieron la invitación pero no han confirmado vía el enlace
+                </p>
+              </div>
+
+              {followupGuests.length === 0 ? (
+                <div className="p-8 text-center text-gray-500">
+                  <p className="text-lg mb-2">¡Excelente! Todos han respondido 🎉</p>
+                  <p>No hay invitados pendientes de confirmación</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Nombre
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Teléfono
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Asientos Reservados
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Estado
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {followupGuests.map((guest) => (
+                        <tr key={guest.id}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {guest.name}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{guest.phone}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{guest.seatCount}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800">
+                              Esperando RSVP
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </>
         )}

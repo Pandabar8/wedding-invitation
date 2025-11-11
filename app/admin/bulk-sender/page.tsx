@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 
 interface Guest {
   id?: number
@@ -19,6 +20,10 @@ interface WhatsAppLink {
 }
 
 export default function BulkSender() {
+  const searchParams = useSearchParams()
+  const mode = searchParams.get("mode") || "initial"
+  const isFollowupMode = mode === "followup"
+
   const [guests, setGuests] = useState<Guest[]>([])
   const [whatsappLinks, setWhatsappLinks] = useState<WhatsAppLink[]>([])
   const [loading, setLoading] = useState(false)
@@ -31,7 +36,8 @@ export default function BulkSender() {
   }, [])
 
   const loadGuestList = () => {
-    const savedGuests = localStorage.getItem("wedding-guest-list")
+    const storageKey = isFollowupMode ? "wedding-followup-guests" : "wedding-guest-list"
+    const savedGuests = localStorage.getItem(storageKey)
     if (savedGuests) {
       setGuests(JSON.parse(savedGuests))
     }
@@ -43,10 +49,10 @@ export default function BulkSender() {
   }
 
   const generateWhatsAppLinks = async () => {
-    const unsent = guests.filter((g) => !g.invitationSent)
+    const targetGuests = isFollowupMode ? guests : guests.filter((g) => !g.invitationSent)
 
-    if (unsent.length === 0) {
-      alert("Todas las invitaciones ya han sido enviadas")
+    if (targetGuests.length === 0) {
+      alert(isFollowupMode ? "No hay invitados para seguimiento" : "Todas las invitaciones ya han sido enviadas")
       return
     }
 
@@ -56,7 +62,7 @@ export default function BulkSender() {
       const response = await fetch("/api/generate-whatsapp-links", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ guests: unsent }),
+        body: JSON.stringify({ guests: targetGuests, mode }),
       })
 
       const result = await response.json()
@@ -87,8 +93,13 @@ export default function BulkSender() {
 
   const markAsSent = (index: number) => {
     const link = whatsappLinks[index]
-    const updatedGuests = guests.map((g) => (g.name === link.guest ? { ...g, invitationSent: true } : g))
-    saveGuestList(updatedGuests)
+
+    const mainGuestList = localStorage.getItem("wedding-guest-list")
+    if (mainGuestList) {
+      const allGuests = JSON.parse(mainGuestList)
+      const updatedGuests = allGuests.map((g: Guest) => (g.name === link.guest ? { ...g, invitationSent: true } : g))
+      localStorage.setItem("wedding-guest-list", JSON.stringify(updatedGuests))
+    }
 
     setSendingStats((prev) => ({ ...prev, sent: prev.sent + 1 }))
 
@@ -113,11 +124,11 @@ export default function BulkSender() {
 
     alert(
       "🚀 Modo automático activado!\n\n" +
-        "1. Se abrirá WhatsApp con el mensaje pre-escrito\n" +
-        "2. Solo presiona ENVIAR en WhatsApp\n" +
-        "3. Regresa aquí y presiona 'Enviado'\n" +
-        "4. Se abrirá automáticamente el siguiente\n\n" +
-        "¡Súper rápido y fácil!",
+      "1. Se abrirá WhatsApp con el mensaje pre-escrito\n" +
+      "2. Solo presiona ENVIAR en WhatsApp\n" +
+      "3. Regresa aquí y presiona 'Enviado'\n" +
+      "4. Se abrirá automáticamente el siguiente\n\n" +
+      "¡Súper rápido y fácil!",
     )
   }
 
@@ -132,21 +143,29 @@ export default function BulkSender() {
     setAutoMode(false)
   }
 
-  const unsentGuests = guests.filter((g) => !g.invitationSent)
+  const unsentGuests = isFollowupMode ? guests : guests.filter((g) => !g.invitationSent)
   const progress = whatsappLinks.length > 0 ? (sendingStats.sent / sendingStats.total) * 100 : 0
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Envío Masivo de Invitaciones</h1>
-          <p className="text-gray-600">Sistema automatizado para enviar invitaciones vía WhatsApp</p>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+            {isFollowupMode ? "Envío de Recordatorios RSVP" : "Envío Masivo de Invitaciones"}
+          </h1>
+          <p className="text-gray-600">
+            {isFollowupMode
+              ? "Envía recordatorios a invitados que no han confirmado su asistencia"
+              : "Sistema automatizado para enviar invitaciones vía WhatsApp"}
+          </p>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-lg font-semibold text-gray-600">Total Invitados</h3>
+            <h3 className="text-lg font-semibold text-gray-600">
+              {isFollowupMode ? "Para Seguimiento" : "Total Invitados"}
+            </h3>
             <p className="text-3xl font-bold text-blue-600">{guests.length}</p>
           </div>
           <div className="bg-white p-6 rounded-lg shadow">
@@ -155,13 +174,23 @@ export default function BulkSender() {
           </div>
           <div className="bg-white p-6 rounded-lg shadow">
             <h3 className="text-lg font-semibold text-gray-600">Enviadas</h3>
-            <p className="text-3xl font-bold text-green-600">{guests.filter((g) => g.invitationSent).length}</p>
+            <p className="text-3xl font-bold text-green-600">
+              {isFollowupMode ? 0 : guests.filter((g) => g.invitationSent).length}
+            </p>
           </div>
           <div className="bg-white p-6 rounded-lg shadow">
             <h3 className="text-lg font-semibold text-gray-600">Progreso</h3>
             <p className="text-3xl font-bold text-purple-600">{Math.round(progress)}%</p>
           </div>
         </div>
+
+        {isFollowupMode && (
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-8">
+            <p className="text-orange-800 font-semibold">
+              📨 Modo Recordatorio: Enviando mensajes de seguimiento a invitados sin respuesta
+            </p>
+          </div>
+        )}
 
         {/* How it Works */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
@@ -208,10 +237,14 @@ export default function BulkSender() {
                 disabled={loading || unsentGuests.length === 0}
                 className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 text-lg font-semibold"
               >
-                {loading ? "Generando..." : `Generar ${unsentGuests.length} Enlaces de WhatsApp`}
+                {loading
+                  ? "Generando..."
+                  : `Generar ${unsentGuests.length} Enlaces de ${isFollowupMode ? "Recordatorio" : "WhatsApp"}`}
               </button>
               {unsentGuests.length === 0 && (
-                <p className="text-gray-500 mt-2">Todas las invitaciones ya han sido enviadas</p>
+                <p className="text-gray-500 mt-2">
+                  {isFollowupMode ? "No hay invitados para seguimiento" : "Todas las invitaciones ya han sido enviadas"}
+                </p>
               )}
             </div>
           ) : (
@@ -224,7 +257,8 @@ export default function BulkSender() {
                 />
               </div>
               <p className="text-center text-gray-600">
-                {sendingStats.sent} de {sendingStats.total} invitaciones enviadas ({Math.round(progress)}%)
+                {sendingStats.sent} de {sendingStats.total} {isFollowupMode ? "recordatorios" : "invitaciones"} enviadas
+                ({Math.round(progress)}%)
               </p>
 
               {/* Auto Mode Controls */}
@@ -259,7 +293,7 @@ export default function BulkSender() {
         {whatsappLinks.length > 0 && currentIndex < whatsappLinks.length && (
           <div className="bg-white rounded-lg shadow p-6 mb-8">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">
-              Invitación Actual ({currentIndex + 1} de {whatsappLinks.length})
+              {isFollowupMode ? "Recordatorio" : "Invitación"} Actual ({currentIndex + 1} de {whatsappLinks.length})
             </h2>
 
             <div className="bg-gray-50 p-4 rounded-lg mb-4">
@@ -306,7 +340,9 @@ export default function BulkSender() {
         {whatsappLinks.length > 0 && (
           <div className="bg-white rounded-lg shadow overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-800">Lista de Invitaciones</h2>
+              <h2 className="text-xl font-semibold text-gray-800">
+                Lista de {isFollowupMode ? "Recordatorios" : "Invitaciones"}
+              </h2>
             </div>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
@@ -332,7 +368,7 @@ export default function BulkSender() {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {whatsappLinks.map((link, index) => {
                     const guest = guests.find((g) => g.name === link.guest)
-                    const isSent = guest?.invitationSent || false
+                    const isSent = sendingStats.sent > index
                     const isCurrent = index === currentIndex
 
                     return (
@@ -345,9 +381,8 @@ export default function BulkSender() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{link.phone}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
-                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              isSent ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
-                            }`}
+                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${isSent ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
+                              }`}
                           >
                             {isSent ? "Enviada" : "Pendiente"}
                           </span>
