@@ -34,7 +34,7 @@ export default function AdminDashboard() {
   const [bulkResult, setBulkResult] = useState<BulkResult | null>(null)
   const [hasActualGuestCountColumn, setHasActualGuestCountColumn] = useState(true)
   const [stats, setStats] = useState({
-    total: 0,
+    totalRsvps: 0,
     attending: 0,
     notAttending: 0,
     totalGuests: 0,
@@ -65,7 +65,7 @@ export default function AdminDashboard() {
 
       setRsvps(data || [])
 
-      const total = data?.length || 0
+      const totalRsvps = data?.length || 0
       const attending = data?.filter((r) => r.attendance === "yes").length || 0
       const notAttending = data?.filter((r) => r.attendance === "no").length || 0
       const totalGuests =
@@ -77,7 +77,7 @@ export default function AdminDashboard() {
         }, 0) || 0
       const assignedSeats = data?.reduce((sum, r) => sum + r.guest_count, 0) || 0
 
-      setStats({ total, attending, notAttending, totalGuests, assignedSeats })
+      setStats({ totalRsvps, attending, notAttending, totalGuests, assignedSeats })
     } catch (error) {
       console.error("Error fetching RSVPs:", error)
     } finally {
@@ -366,7 +366,7 @@ export default function AdminDashboard() {
                     : "border-transparent text-gray-500 hover:text-gray-700"
                   }`}
               >
-                RSVPs Recibidos ({stats.total})
+                RSVPs Recibidos ({stats.totalRsvps})
               </button>
               <button
                 onClick={() => setActiveTab("followups")}
@@ -587,7 +587,7 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
               <div className="bg-white p-6 rounded-lg shadow">
                 <h3 className="text-lg font-semibold text-gray-600">Total RSVPs</h3>
-                <p className="text-3xl font-bold text-blue-600">{stats.total}</p>
+                <p className="text-3xl font-bold text-blue-600">{stats.totalRsvps}</p>
               </div>
               <div className="bg-white p-6 rounded-lg shadow">
                 <h3 className="text-lg font-semibold text-gray-600">Attending</h3>
@@ -622,6 +622,9 @@ export default function AdminDashboard() {
                         Guest
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Phone
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Attendance
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -641,43 +644,68 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {rsvps.map((rsvp) => (
-                      <tr key={rsvp.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {rsvp.guest_name}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${rsvp.attendance === "yes" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                              }`}
-                          >
-                            {rsvp.attendance === "yes" ? "Attending" : "Not Attending"}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{rsvp.guest_count}</td>
-                        {hasActualGuestCountColumn && (
+                    {rsvps.map((rsvp) => {
+                      const matchingGuest = guests.find((g) => {
+                        const normalize = (str: string) =>
+                          str
+                            .toLowerCase()
+                            .normalize("NFD")
+                            .replace(/[\u0300-\u036f]/g, "")
+                            .replace(/[^a-z0-9\s]/g, "")
+                            .trim()
+                        const rsvpName = normalize(rsvp.guest_name || "")
+                        const guestName = normalize(g.name)
+                        const rsvpWords = rsvpName.split(/\s+/)
+                        const guestWords = guestName.split(/\s+/)
+                        const commonWords = rsvpWords.filter((word) => guestWords.includes(word))
+                        return commonWords.length >= 2 || rsvpName === guestName
+                      })
+
+                      return (
+                        <tr key={rsvp.id}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {rsvp.guest_name}
+                          </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {rsvp.attendance === "yes" ? (
-                              <div>
-                                <span className="font-medium">{rsvp.actual_guest_count || rsvp.guest_count}</span>
-                                <span className="text-gray-400"> / {rsvp.guest_count}</span>
-                                {(rsvp.actual_guest_count || rsvp.guest_count) < rsvp.guest_count && (
-                                  <div className="text-xs text-orange-600">
-                                    -{rsvp.guest_count - (rsvp.actual_guest_count || rsvp.guest_count)} seats
-                                  </div>
-                                )}
-                              </div>
+                            {matchingGuest ? (
+                              <span>{matchingGuest.phone}</span>
                             ) : (
-                              <span className="text-gray-400">-</span>
+                              <span className="text-orange-600 font-medium">Desconocido</span>
                             )}
                           </td>
-                        )}
-                        <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">{rsvp.message || "-"}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {rsvp.created_at ? new Date(rsvp.created_at).toLocaleDateString() : "-"}
-                        </td>
-                      </tr>
-                    ))}
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span
+                              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${rsvp.attendance === "yes" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                                }`}
+                            >
+                              {rsvp.attendance === "yes" ? "Attending" : "Not Attending"}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{rsvp.guest_count}</td>
+                          {hasActualGuestCountColumn && (
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {rsvp.attendance === "yes" ? (
+                                <div>
+                                  <span className="font-medium">{rsvp.actual_guest_count || rsvp.guest_count}</span>
+                                  <span className="text-gray-400"> / {rsvp.guest_count}</span>
+                                  {(rsvp.actual_guest_count || rsvp.guest_count) < rsvp.guest_count && (
+                                    <div className="text-xs text-orange-600">
+                                      -{rsvp.guest_count - (rsvp.actual_guest_count || rsvp.guest_count)} seats
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-gray-400">-</span>
+                              )}
+                            </td>
+                          )}
+                          <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">{rsvp.message || "-"}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {rsvp.created_at ? new Date(rsvp.created_at).toLocaleDateString() : "-"}
+                          </td>
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>
