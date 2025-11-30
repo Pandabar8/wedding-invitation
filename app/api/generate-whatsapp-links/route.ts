@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
         // Follow-up/reminder message
         inviteMessage =
           `Hola ${guest.name}!\n\n` +
-          `Esperamos que estén bien. Les enviamos este recordatorio amable para confirmar su asistencia a nuestra boda.\n\n` +
+          `Esperamos que estén bien. Les enviamos este atento recordatorio para confirmar su asistencia a nuestra boda.\n\n` +
           `FECHA: Sabado, 27 de Diciembre, 2025\n` +
           `CEREMONIA: 4:00 PM - Parroquia ONUVA\n` +
           `RECEPCION: 6:15 PM - Finca La Quadra\n\n` +
